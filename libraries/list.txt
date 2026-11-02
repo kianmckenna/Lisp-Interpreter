@@ -1,0 +1,131 @@
+(def length (list)
+    (if
+       (nil? list)
+       0
+       (add 1 (length (cdr list))) 
+    )
+)
+
+(def contains? (item list)
+    (if
+        (nil? list)
+        ()
+        (if 
+            (eq? (car list) item)
+            'T
+            (contains? item (cdr list))
+        )
+    )
+)
+
+(def count (item list)
+    (if
+        (nil? list)
+        0
+        (if
+            (eq? item (car list))
+            (add 1 (count item (cdr list))) 
+            (count item (cdr list))  
+        )
+    )
+)
+
+(def construct (list)
+    (if
+        (nil? list)
+        ()
+        (cons (car list) (construct (cdr list)))
+    )
+)
+
+(def append (list1 list2)
+    (if
+        (and? (nil? list1) (nil? list2))
+        ()
+        (if
+            (nil? list1)
+            (if
+                (nil? list2)
+                ()
+                (cons
+                    (car list2)
+                    (append list1 (cdr list2))
+                )
+            )
+            (cons
+                (car list1)
+                (append (cdr list1) list2)
+            )
+        )
+    )
+)
+
+(def allNumbers? (list)
+    (if
+        (nil? list)
+        'T
+        (if
+            (number? (car list))
+            (allNumbers? (cdr list))
+            ()
+        )
+    )
+)
+
+(def reverseHelper (list)
+    (if
+        (nil? (cdr list))
+        (car list)
+        (cons 
+            (reverseHelper (cdr list)) 
+            (car list)
+        )
+    )
+)
+
+(def reverse (list)
+    (cons
+        (reverseHelper list)
+        ()
+    )
+)
+
+(def compare (num1 num2)
+    (if
+        (lt num1 num2)
+        num2
+        num1
+    )
+)
+
+(def max (list)
+    (if
+        (nil? (cdr list))
+        (car list)
+        (if
+            (nil? (cdr list))
+            list
+            (compare (car list) (max (cdr list)))
+        )
+    )
+)
+
+(def lesser (num1 num2)
+    (if
+        (lt num1 num2)
+        num1
+        num2
+    )
+)
+
+(def min (list)
+    (if
+        (nil? (cdr list))
+        (car list)
+        (if
+            (nil? (cdr list))
+            list
+            (lesser (car list) (min (cdr list)))
+        )
+    )
+)

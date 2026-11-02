@@ -1,0 +1,29 @@
+(use list)
+
+(def sumTo (num)
+    (if
+        (eq? num 0)
+        0
+        (add num (sumTo (sub num 1)))
+    )
+)
+
+(def sumList (list)
+    (if
+        (nil? list)
+        0
+        (add (car list) (sumList (cdr list)))        
+    )
+)
+
+(def factorial (num)
+    (if
+        (eq? num 1)
+        1
+        (mul num (factorial (sub num 1)))
+    )
+)
+
+(def average (list)
+    (div (sumList list) (length list))
+) 

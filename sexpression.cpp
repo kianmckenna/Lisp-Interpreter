@@ -778,7 +778,7 @@ SExpression* eval(const SExpression& expr)
 
     if (function == "use")
     {
-        std::string libName = expr.cdr->car->atom;
+        std::string libName = "libraries\\" + expr.cdr->car->atom + ".txt";
 
         std::ifstream library(libName); 
 
