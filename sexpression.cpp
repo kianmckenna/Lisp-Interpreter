@@ -457,6 +457,30 @@ SExpression* ifPredicate(const SExpression& a0, const SExpression& a1, const SEx
     }
 }
 
+SExpression* whilePredicate (const SExpression& condition, const SExpression& body, const SExpression& iterate)
+{
+    // check if variable has been declared in the scope
+    // evaluate condition using that variable
+
+    const SExpression* condResult = eval(condition);
+    if (condResult->isNil())
+    {
+        delete condResult;
+        return makeFalse();
+    }
+    delete condResult;
+
+    // execute body
+
+    SExpression* bodyResult = eval(body);
+    delete bodyResult;
+
+    SExpression* iterateResult = eval(iterate);
+    delete iterateResult;
+
+    return whilePredicate(condition, body, iterate);
+}
+
 SExpression* condPredicate(const SExpression& list)
 {
     const SExpression* current = &list;
@@ -871,6 +895,13 @@ SExpression* eval(const SExpression& expr)
         return value;
     }
 
+    if (function == "print") 
+    {
+        SExpression* output = eval(*expr.cdr->car);
+
+        return output;
+    }
+
     if (function == "nil?")
     {
         SExpression* argument = eval(*expr.cdr->car);
@@ -958,6 +989,34 @@ SExpression* eval(const SExpression& expr)
         const SExpression& a2 = *expr.cdr->cdr->cdr->car;
 
        return ifPredicate(a0, a1, a2);
+    }
+
+    if (function == "while")
+    {
+        if (!expr.cdr->isPair()) 
+        {
+            throw std::runtime_error("expects (while CONDITION body iterator)");
+        }
+        const SExpression& condition = *expr.cdr->car;
+
+        if (!expr.cdr->cdr->isPair())
+        {
+            throw std::runtime_error("expects (while condition BODY iterator)");
+        }
+        const SExpression& body = *expr.cdr->cdr->car;
+
+        if (!expr.cdr->cdr->cdr->isPair()) 
+        {
+            throw std::runtime_error("expects (while condition body ITERATOR)");
+        }
+        const SExpression& iterate = *expr.cdr->cdr->cdr->car;
+
+        if (iterate.car->atom != "set")
+        {
+            throw std::runtime_error("iterator must set variable");
+        }
+
+        return whilePredicate(condition, body, iterate);
     }
 
     if (function == "cond")

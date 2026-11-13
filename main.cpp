@@ -5,7 +5,6 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <cctype>
 #include <sstream>
 
 using namespace std;

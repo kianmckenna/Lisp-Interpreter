@@ -2,6 +2,8 @@ Build/
 
 .vscode/
 
+submissions/
+
 *.o
 
 *.zip
