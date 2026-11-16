@@ -1,8 +1,1 @@
-(set x 3)
 
-(set y 0)
-
-(while (lt x 1000)
-    (set y x)
-    (set x (add x 1))
-)

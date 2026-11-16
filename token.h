@@ -7,6 +7,7 @@
 enum class TokenType
 {
     Atom,
+    String,
     LeftParen,
     RightParen,
     Quote
@@ -19,7 +20,5 @@ public:
     TokenType type;
     std::string value;
 };
-
-std::vector<Token> tokenize(const std::string &input);
 
 #endif

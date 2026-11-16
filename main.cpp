@@ -1,3 +1,5 @@
+#include "interpreter.h"
+#include "parser.h"
 #include "sexpression.h"
 #include "token.h"
 
@@ -18,28 +20,24 @@ int main()
 
     string input = buffer.str();
 
-    vector<Token> tokens = tokenize(input);
+    Parser parser;
+    parser.tokenize(input);
 
     file.close();
 
     size_t position = 0;
 
-    ofstream output("output.txt");
+    Interpreter interpreter;
 
-    while (position < tokens.size())
+    while (position < parser.tokens.size())
     {
         SExpression expr;
-        expr.parse(tokens, position);
+        parser.parse(expr, position);
 
-        SExpression* result = eval(expr);
-
-        result->print(output);
-        output << '\n';
+        SExpression* result = interpreter.eval(expr);
 
         delete result;
     }
-
-    output.close();
 
     return 0;
 }
