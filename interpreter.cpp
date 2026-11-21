@@ -1,4 +1,5 @@
 #include "interpreter.h"
+#include "parser.h"
 
 #include <stdexcept>
 #include <iostream>
@@ -90,9 +91,20 @@ void Interpreter::pushStack(SExpression& names, SExpression& values)
 void Interpreter::print(SExpression& expr)
 {
     SExpression* current = &expr;
+
     while (current->isPair())
     {
-        SExpression* result = eval(*current->car);
+        SExpression* result = current->car;
+
+        if (result->atom == "nl")
+        {
+            std::cout << std::endl;
+
+            current = current->cdr;
+            continue;
+        }
+
+        result = eval(*result);
 
         if (result->isPair())
         {
@@ -104,18 +116,18 @@ void Interpreter::print(SExpression& expr)
         {
             std::cout << result->atom;
         }
-        else if (result->atom == "nl")
+        else if (isNumber(*result))
         {
-            std::cout << "\n";
-        } 
+            std::cout << result->atom;
+        }
         else if (result->isNil()) 
         {
             std::cout << "()";
         }
-        else if (result->isAtom()) 
+        else if (result->atom == "T")
         {
-            std::cout << result->atom;
-        } 
+            std::cout << "T";
+        }
 
         delete result;
 
@@ -150,6 +162,11 @@ SExpression* Interpreter::eval(SExpression& expr)
         return expr.clone();
     }
 
+    if (isNumber(expr))
+    {
+        return expr.clone();
+    }
+
     if (expr.isAtom())
     {
         return lookup(expr);
@@ -167,9 +184,103 @@ SExpression* Interpreter::eval(SExpression& expr)
 
     std::string function = expr.car->atom;
 
-    /*
+    if (function == "begin")
+    {
+        SExpression* current = expr.cdr;
+        SExpression* result = nullptr;
+
+        while (current->isPair())
+        {
+            delete result;
+
+            result = eval(*current->car);
+
+            current = current->cdr;
+        }
+
+        if (result == nullptr)
+        {
+            return makeFalse();
+        }
+
+        return result;
+    }
+
+    if (function == "charAt")
+    {
+        if (!expr.cdr->cdr->isPair() || expr.cdr->cdr->cdr->isPair())
+        {
+            throw std::runtime_error("concat takes only two arguments");
+        }
+
+        const SExpression* string = eval(*expr.cdr->car);
+        int position = toNumber(eval(*expr.cdr->cdr->car));
+
+        SExpression* result = charAt(*string, position);
+
+        delete string;
+
+        return result;
+    }
+
+    if (function == "concat")
+    {
+        if (!expr.cdr->cdr->isPair() || expr.cdr->cdr->cdr->isPair())
+        {
+            throw std::runtime_error("concat takes only two arguments");
+        }
+
+        const SExpression* first = eval(*expr.cdr->car);
+        const SExpression* second = eval(*expr.cdr->cdr->car);
+
+        SExpression* result = concat(*first, *second);
+
+        delete first;
+        delete second;
+
+        return result;
+    }
+
+    if (function == "strlen")
+    {
+        if (expr.cdr->cdr->isPair() || expr.cdr->car->isNil())
+        {
+            throw std::runtime_error("strlen takes only one element");
+        }
+
+        SExpression* string = eval(*expr.cdr->car);
+
+        SExpression* result = strlen(*string);
+
+        delete string;
+
+        return result;        
+    }
+
+    if (function == "streq?")
+    {
+        if (!expr.cdr->cdr->isPair() || expr.cdr->cdr->cdr->isPair())
+        {
+            throw std::runtime_error("concat takes only two arguments");
+        }
+
+        const SExpression* first = eval(*expr.cdr->car);
+        const SExpression* second = eval(*expr.cdr->cdr->car);
+
+        SExpression* result = streq(*first, *second);
+
+        delete first;
+        delete second;
+
+        return result;
+    }
+
     if (function == "use")
     {
+        if (expr.cdr->car->type != ExpressionType::String)
+        {
+            throw std::runtime_error("Library name must be a string");
+        }
         std::string libName = "libraries\\" + expr.cdr->car->atom + ".txt";
 
         std::ifstream library(libName); 
@@ -179,21 +290,25 @@ SExpression* Interpreter::eval(SExpression& expr)
 
         std::string input = buffer.str();
 
-        std::vector<Token> tokens = tokenize(input);
+        Parser parser;
+        parser.tokenize(input);
 
         library.close();
 
         size_t position = 0;
 
-        while (position < tokens.size())
+        while (position < parser.tokens.size())
         {
-            SExpression libExpr;
-            libExpr.parse(tokens, position);
+            SExpression expr;
+            parser.parse(expr, position);
 
-            eval(libExpr);
+            SExpression* result = eval(expr);
+
+            delete result;
         }
+
+        return makeFalse();
     }
-    */
 
     if (function == "quote")
     {
@@ -269,6 +384,13 @@ SExpression* Interpreter::eval(SExpression& expr)
         print(*expr.cdr);
 
         return makeFalse();
+    }
+
+    if (function == "nl")
+    {
+        expr.atom = "\n";
+
+        return expr.clone();
     }
 
     if (function == "nil?")
@@ -537,6 +659,11 @@ SExpression* Interpreter::evalArgs(SExpression& arguments)
 
 SExpression* Interpreter::lookup(SExpression& symbol)
 {
+    if (symbol.type == ExpressionType::String)
+    {
+        return symbol.clone();
+    }
+
     SExpression* current = stack;
 
     while (current->isPair())
@@ -580,7 +707,7 @@ SExpression* Interpreter::lookup(SExpression& symbol)
         current = current->cdr;
     }
 
-    return symbol.clone();
+    throw std::runtime_error("Variable \'" + symbol.atom + "\' does not exist in this context");
 }
 
 SExpression* Interpreter::car(const SExpression& expr)
@@ -613,6 +740,65 @@ SExpression* Interpreter::cons(SExpression& car, SExpression& cdr)
     result->cdr = cdr.clone();
 
     return result;
+}
+
+SExpression* Interpreter::charAt(const SExpression& string, const int position)
+{
+    if (string.type != ExpressionType::String)
+    {
+        throw std::runtime_error("argument is not a string");
+    }
+
+    SExpression* result = new SExpression();
+
+    result->atom = string.atom.at(position);
+    result->type = ExpressionType::String;
+
+    return result;
+}
+
+SExpression* Interpreter::concat(const SExpression& first, const SExpression& second)
+{
+    if (first.type != ExpressionType::String || second.type != ExpressionType::String)
+    {
+        throw std::runtime_error("arguments must be strings");
+    }
+
+    std::string atom = first.atom + second.atom;
+
+    SExpression* result = new SExpression();
+
+    result->atom = atom;
+    result->type = ExpressionType::String;
+
+    return result;
+}
+
+SExpression* Interpreter::strlen(const SExpression& string)
+{
+    if (string.type != ExpressionType::String)
+    {
+        throw std::runtime_error("strlen only operates on strings");
+    }
+
+    int length = string.atom.length();
+
+    return makeNumber(length);
+}
+
+SExpression* Interpreter::streq(const SExpression& first, const SExpression& second)
+{
+    if (first.type != ExpressionType::String || second.type != ExpressionType::String)
+    {
+        throw std::runtime_error("streq only operates on strings");
+    }
+
+    if (first.atom == second.atom)
+    {
+        return makeTrue();
+    }
+
+    return makeFalse();
 }
 
 SExpression* Interpreter::set(SExpression& name, SExpression& value)

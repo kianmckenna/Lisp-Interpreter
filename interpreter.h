@@ -40,6 +40,12 @@ class Interpreter {
         SExpression* set(SExpression& name, SExpression& value);
         SExpression* quote(SExpression& expr);
 
+        // Strings
+        SExpression* charAt(const SExpression& string, const int position);
+        SExpression* concat(const SExpression& first, const SExpression& second);
+        SExpression* streq(const SExpression& first, const SExpression& second);
+        SExpression* strlen(const SExpression& string);
+
         // conditions
         SExpression* andPredicate(SExpression& first, SExpression& second);
         SExpression* atomPredicate(const SExpression& expr);
