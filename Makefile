@@ -1,7 +1,7 @@
 CXX ?= g++
 CXXFLAGS ?= -std=c++17 -Wall -Wextra -g
 
-TARGET = S_Expr_2
+TARGET = Lisp
 OBJS = main.o sexpression.o parser.o interpreter.o
 
 .PHONY: all clean

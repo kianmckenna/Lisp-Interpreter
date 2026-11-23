@@ -27,38 +27,6 @@ SExpression* Interpreter::makeFalse()
 {
     return new SExpression();
 }
-/*
-void Interpreter::print(SExpression& expr) // SExpression arg
-{
-    bool shouldPrint = true;
-    if (expr.isPair() && expr.car->isAtom())
-    {
-        shouldPrint = expr.printable();
-    }
-
-    if (shouldPrint)
-    {
-        if (expr.isAtom())
-        {
-            std::cout << expr.atom;
-            return;
-        }
-
-        if (expr.isNil())
-        {
-            std::cout << "()";
-            return;
-        }
-
-        if (expr.isPair())
-        {
-            std::cout << "(";
-            printList(expr);
-            std::cout << ")";
-        }
-    }
-}
-*/
 
 void Interpreter::popStack()
 {
@@ -86,6 +54,51 @@ void Interpreter::pushStack(SExpression& names, SExpression& values)
 
     delete frame;
     delete valueList;
+}
+
+void Interpreter::bindVariables(SExpression& variables)
+{
+    if (variables.isNil()) return;
+
+    SExpression nil;
+    
+    SExpression* names = variables.car->car;
+    SExpression* values = eval(*variables.car->cdr->car);
+
+    SExpression* newNames = cons(*names, nil);
+    SExpression* newValues = cons(*values, nil);
+
+    delete values;
+
+    names = newNames;
+    values = newValues;
+
+    SExpression* currentName = variables.cdr;
+    SExpression* currentValue = variables.cdr;
+
+    while(currentName->isPair() && currentValue->isPair())
+    {
+        SExpression* name = currentName->car->car;
+        SExpression* value = eval(*currentValue->car->cdr->car);
+
+        SExpression* newNames = cons(*name, *names);
+        SExpression* newValues = cons(*value, *values);
+
+        delete names;
+        delete value;
+        delete values;
+
+        names = newNames;
+        values = newValues;
+
+        currentName = currentName->cdr;
+        currentValue = currentValue->cdr;
+    }
+
+    pushStack(*names, *values);
+
+    delete names;
+    delete values;
 }
 
 void Interpreter::print(SExpression& expr)
@@ -202,6 +215,20 @@ SExpression* Interpreter::eval(SExpression& expr)
         {
             return makeFalse();
         }
+
+        return result;
+    }
+
+    if (function == "let")
+    {
+        SExpression* variables = expr.cdr->car;
+
+        bindVariables(*variables);
+
+        SExpression* body = expr.cdr->cdr->car;
+        SExpression* result = eval(*body);
+
+        popStack();
 
         return result;
     }

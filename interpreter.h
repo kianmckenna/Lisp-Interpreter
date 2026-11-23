@@ -9,8 +9,6 @@ class Interpreter {
     public:
         std::ostream* output = &std::cout;
 
-        // void print(SExpression& expr); // may end up replacing these as keyword functions
-
         SExpression* eval(SExpression& expr);
 
     private:
@@ -20,6 +18,7 @@ class Interpreter {
         // environment
         void popStack();
         void pushStack(SExpression& names, SExpression& values);
+        void bindVariables(SExpression& variables);
 
         // IO
         void print(SExpression& expr);

@@ -1,1 +1,5 @@
-(print "Hello" nl "world")
+(set x 10)
+
+(let ()
+    (print "hello" nl)
+)
