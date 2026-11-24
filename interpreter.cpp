@@ -28,6 +28,25 @@ SExpression* Interpreter::makeFalse()
     return new SExpression();
 }
 
+void Interpreter::varToCurrentFrame(SExpression& name, SExpression& value)
+{
+    // get current frame
+    SExpression* currentFrame = stack->car;
+
+    // add name to start of nameList and val to start of valList
+    SExpression* oldNames = currentFrame->car;
+    SExpression* oldValues = currentFrame->cdr->car;
+
+    SExpression* newNames = cons(name, *oldNames);
+    SExpression* newValues = cons(value, *oldValues);
+
+    currentFrame->car = newNames;
+    currentFrame->cdr->car = newValues;
+
+    delete oldNames;
+    delete oldValues;
+}
+
 void Interpreter::popStack()
 {
     if (stack->isNil())
@@ -41,19 +60,24 @@ void Interpreter::popStack()
     stack = newStack;
 }
 
-void Interpreter::pushStack(SExpression& names, SExpression& values)
+void Interpreter::pushStack()
 {
     SExpression nil;
 
-    SExpression* valueList = cons(values, nil);
-    SExpression* frame = cons(names, *valueList);
+    // Makes: (())
+    SExpression* valueList = cons(nil, nil);
 
+    // Makes: (() ())
+    SExpression* frame = cons(nil, *valueList);
+
+    // Makes: ( (() ()) old-frame old-frame ... )
     SExpression* newStack = cons(*frame, *stack);
+
+    delete valueList;
+    delete frame;
+
     delete stack;
     stack = newStack;
-
-    delete frame;
-    delete valueList;
 }
 
 void Interpreter::bindVariables(SExpression& variables)
@@ -63,12 +87,10 @@ void Interpreter::bindVariables(SExpression& variables)
     SExpression nil;
     
     SExpression* names = variables.car->car;
-    SExpression* values = eval(*variables.car->cdr->car);
+    SExpression* values = variables.car->cdr->car;
 
     SExpression* newNames = cons(*names, nil);
     SExpression* newValues = cons(*values, nil);
-
-    delete values;
 
     names = newNames;
     values = newValues;
@@ -79,14 +101,12 @@ void Interpreter::bindVariables(SExpression& variables)
     while(currentName->isPair() && currentValue->isPair())
     {
         SExpression* name = currentName->car->car;
-        SExpression* value = eval(*currentValue->car->cdr->car);
+        SExpression* value = currentValue->car->cdr->car;
 
         SExpression* newNames = cons(*name, *names);
         SExpression* newValues = cons(*value, *values);
 
         delete names;
-        delete value;
-        delete values;
 
         names = newNames;
         values = newValues;
@@ -95,10 +115,23 @@ void Interpreter::bindVariables(SExpression& variables)
         currentValue = currentValue->cdr;
     }
 
-    pushStack(*names, *values);
+    initializeStack(*names, *values);
 
     delete names;
-    delete values;
+}
+
+void Interpreter::initializeStack(SExpression& names, SExpression& values)
+{
+    SExpression nil;
+
+    SExpression* valueList = cons(values, nil);
+
+    SExpression* newFrame = cons(names, *valueList);
+
+    delete stack->car;
+    stack->car = newFrame;
+
+    delete valueList;
 }
 
 void Interpreter::print(SExpression& expr)
@@ -222,6 +255,10 @@ SExpression* Interpreter::eval(SExpression& expr)
     if (function == "let")
     {
         SExpression* variables = expr.cdr->car;
+
+        evalVars(*variables);
+        
+        pushStack();
 
         bindVariables(*variables);
 
@@ -394,6 +431,12 @@ SExpression* Interpreter::eval(SExpression& expr)
         SExpression* name = expr.cdr->car;
 
         SExpression* value = eval(*expr.cdr->cdr->car);
+
+        if (!stack->isNil())
+        {
+            varToCurrentFrame(*name, *value);
+            return value;
+        }
 
         SExpression* bind = set(*name, *value);
         SExpression* newRho = cons(*bind, *rho);
@@ -647,7 +690,9 @@ SExpression* Interpreter::eval(SExpression& expr)
     {
         SExpression* arguments = evalArgs(*expr.cdr);
 
-        pushStack(*funcDef->cdr->car, *arguments);
+        pushStack();
+
+        initializeStack(*funcDef->cdr->car, *arguments);
 
         SExpression* body = funcDef->cdr->cdr->car;
 
@@ -682,6 +727,21 @@ SExpression* Interpreter::evalArgs(SExpression& arguments)
     delete rest;
 
     return result;
+}
+
+void Interpreter::evalVars(SExpression& variables)
+{
+    SExpression* current = &variables;
+    while (current->isPair())
+    {
+        SExpression* evaluated = eval(*current->car->cdr->car);
+
+        delete current->car->cdr->car;
+
+        current->car->cdr->car = evaluated;
+
+        current = current->cdr;
+    }
 }
 
 SExpression* Interpreter::lookup(SExpression& symbol)

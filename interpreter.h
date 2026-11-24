@@ -16,9 +16,11 @@ class Interpreter {
         SExpression* makeFalse();
 
         // environment
+        void varToCurrentFrame(SExpression& name, SExpression& value);
         void popStack();
-        void pushStack(SExpression& names, SExpression& values);
+        void pushStack();
         void bindVariables(SExpression& variables);
+        void initializeStack(SExpression& names, SExpression& values);
 
         // IO
         void print(SExpression& expr);
@@ -26,6 +28,7 @@ class Interpreter {
 
         // evaluator
         SExpression* evalArgs(SExpression& arguments);
+        void evalVars(SExpression& variables);
 
         SExpression* lookup(SExpression& symbol);
 
