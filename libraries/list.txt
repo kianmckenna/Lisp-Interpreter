@@ -39,25 +39,9 @@
 )
 
 (def append (list1 list2)
-    (if
-        (and? (nil? list1) (nil? list2))
-        ()
-        (if
-            (nil? list1)
-            (if
-                (nil? list2)
-                ()
-                (cons
-                    (car list2)
-                    (append list1 (cdr list2))
-                )
-            )
-            (cons
-                (car list1)
-                (append (cdr list1) list2)
-            )
-        )
-    )
+    (foldr (function (elem acc)
+        (cons elem acc)
+    ) list2 list1)
 )
 
 (def allNumbers? (list)
@@ -119,20 +103,18 @@
 )
 
 (def map (transform list)
-    (foldr (function (elem acc) (cons (transform elem) acc)) () list)
+    (foldr (function (elem acc) 
+        (cons (transform elem) acc)
+    ) () list)
 )
 
-(def filter (op list)
-    (if (nil? list)
-        list
-        (if (op (car list))
-            (cons
-                (car list)
-                (filter op (cdr list))
-            )
-            (filter op (cdr list))
+(def filter (check list)
+    (foldr (function (elem acc)
+        (if (check elem)
+            (cons elem acc)
+            acc
         )
-    )
+    ) () list)
 )
 
 (def foldl (op acc list)
