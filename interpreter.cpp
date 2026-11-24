@@ -566,18 +566,7 @@ SExpression* Interpreter::eval(SExpression& expr)
         }
         SExpression& body = *expr.cdr->cdr->car;
 
-        if (!expr.cdr->cdr->cdr->isPair()) 
-        {
-            throw std::runtime_error("expects (while condition body ITERATOR)");
-        }
-        SExpression& iterate = *expr.cdr->cdr->cdr->car;
-
-        if (iterate.car->atom != "set")
-        {
-            throw std::runtime_error("iterator must set variable");
-        }
-
-        return whilePredicate(condition, body, iterate);
+        return whilePredicate(condition, body);
     }
 
     if (function == "cond")
@@ -1114,7 +1103,7 @@ SExpression* Interpreter::ifPredicate(SExpression& condition, SExpression& ifBod
     }
 }
 
-SExpression* Interpreter::whilePredicate(SExpression& condition, SExpression& body, SExpression& iterate)
+SExpression* Interpreter::whilePredicate(SExpression& condition, SExpression& body)
 {
     // check if variable has been declared in the scope
     // evaluate condition using that variable
@@ -1132,10 +1121,7 @@ SExpression* Interpreter::whilePredicate(SExpression& condition, SExpression& bo
     SExpression* bodyResult = eval(body);
     delete bodyResult;
 
-    SExpression* iterateResult = eval(iterate);
-    delete iterateResult;
-
-    return whilePredicate(condition, body, iterate);
+    return whilePredicate(condition, body);
 }
 
 SExpression* Interpreter::add(SExpression& arg1, SExpression& arg2)

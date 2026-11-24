@@ -61,7 +61,7 @@ class Interpreter {
         // control flow
         SExpression* condPredicate(const SExpression& list);
         SExpression* ifPredicate(SExpression& condition, SExpression& ifBody, SExpression& elseBody);
-        SExpression* whilePredicate(SExpression& condition, SExpression& body, SExpression& iterate);
+        SExpression* whilePredicate(SExpression& condition, SExpression& body);
 
         // helpers
         bool isNumber(const SExpression& expr);

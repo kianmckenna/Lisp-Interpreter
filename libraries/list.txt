@@ -72,22 +72,10 @@
     )
 )
 
-(def reverseHelper (list)
-    (if
-        (nil? (cdr list))
-        (car list)
-        (cons 
-            (reverseHelper (cdr list)) 
-            (car list)
-        )
-    )
-)
-
 (def reverse (list)
-    (cons
-        (reverseHelper list)
-        ()
-    )
+    (foldl (function (x y)
+                (cons y x)
+            ) () list)
 )
 
 (def compare (num1 num2)
@@ -127,5 +115,36 @@
             list
             (lesser (car list) (min (cdr list)))
         )
+    )
+)
+
+(def map (transform list)
+    (foldr (function (elem acc) (cons (transform elem) acc)) () list)
+)
+
+(def filter (op list)
+    (if (nil? list)
+        list
+        (if (op (car list))
+            (cons
+                (car list)
+                (filter op (cdr list))
+            )
+            (filter op (cdr list))
+        )
+    )
+)
+
+(def foldl (op acc list)
+    (if (nil? list)
+        acc
+        (foldl op (op acc (car list)) (cdr list))
+    )
+)
+
+(def foldr (op acc list)
+    (if (nil? list)
+        acc
+        (op (car list) (foldr op acc (cdr list)))
     )
 )

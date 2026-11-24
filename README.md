@@ -15,10 +15,10 @@
 - "++" append (haskell like)
 
 ## Latest
-- set now sets a variable to whatever the current scope is
-- let evaluates arguments before initalizing variables to the stack
+- while now has a more flexible syntax. it does not require an iterator. the structure is (while condition body)
+- map, filter, foldr, foldl
 
 ## Currently Working On
-
+- standard library features utilizing the language itself
 
 
